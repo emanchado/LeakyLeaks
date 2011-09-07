@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Leaky Leaks</title>
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!-- Le styles -->
+    <link href="css/bootstrap-1.2.0.css" rel="stylesheet">
+    <style>
+      body { padding-top: 40px; }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="fill">
+        <div class="container">
+          <h3><a href="#">Leaky Leaks</a></h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="sidebar">
+        <form class="form-stacked">
+          <h2>Filters</h2>
+
+          <div class="clearfix">
+            <label for="text">Text:</label>
+            <input id="text" type="text" name="text" style="width: auto" placeholder="Keywords" />
+          </div>
+
+          <div class="clearfix">
+            <label for="tags">Tags:</label>
+            <select multiple id="tags" name="tags" style="height: auto">
+              <option name="VAT">VAT (1)</option>
+              <option name="PREL">PREL (8484)</option>
+              <option name="PHUM">PHUM (2166)</option>
+            </select>
+          </div>
+
+          <div class="clearfix">
+            <label for="offices">Office(s):</label>
+            <select multiple id="offices" name="offices" style="height: auto">
+              <option name="Embassy_Tehran">E. Tehran (5)</option>
+              <option name="Consulate_Vancouver">C. Vancouver (39)</option>
+              <option name="Embassy_Sofia">E. Sofia (85)</option>
+            </select>
+          </div>
+
+          <input class="btn primary" type="submit" value="Search" />
+        </form>
+      </div>
+
+      <div class="content">
+        <h2>Cables</h2>
+
+        <div class="cable">
+          <h3>Audience with Shah April 5 &mdash; from E. Tehran (5 cables)</h3>
+          <div class="date">2/4/1973</div>
+
+          <div class="body">
+            SECRET TEHRAN 2077 Declassified/Released US Department of
+            State EO Systematic Review ... CORRECTED COPY ... Summary:
+            The Dutch Parliament ... <a href="#">Read more</a>
+          </div>
+
+          <div class="tags"><strong>Tags:</strong> PFOR (1), IR (702), PK (406), XF (58)</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
