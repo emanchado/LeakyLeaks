@@ -12,8 +12,42 @@
     <style>
       body { padding-top: 40px; }
     </style>
+    <script src="lib/angular-0.9.19.min.js" ng:autobind></script>
+    <script src="lib/CablePool.js"></script>
+    <script src="lib/valentine.min.js"></script>
+    <script src="lib/utils.js"></script>
+    <script>
+    angular.filter('excerpt', function(input, limit) {
+      return excerpt(input, limit);
+    });
+
+    LeakyLeaksController.$inject = ['$resource'];
+    function LeakyLeaksController($resource) {
+      this.LeakFeedProxy = $resource(
+        'http://api.leakfeed.com/v1/cables/tag/:tag.json',
+        { callback: 'JSON_CALLBACK' },
+        { getByTag: {method: 'JSON', isArray: true}}
+      );
+      this.LeakFeedProxyTest = $resource(
+        'http://localhost/:tag.json',
+        { },
+        { getByTag: {method: 'GET', isArray: true}}
+      );
+    }
+    LeakyLeaksController.prototype = {
+      init: function() {
+        this.cablePool = new CablePool;
+      },
+      fetchCablesByTag: function(tag) {
+        var self = this;
+        var rawCableData = this.LeakFeedProxyTest.getByTag({tag: tag}, function() {
+            self.cablePool.addCables(rawCableData);
+        });
+      }
+    };
+    </script>
   </head>
-  <body>
+  <body ng:controller="LeakyLeaksController" ng:init="fetchCablesByTag('KPIN')">
     <div class="topbar">
       <div class="fill">
         <div class="container">
@@ -57,15 +91,11 @@
       <div class="content">
         <h2>Cables</h2>
 
-        <div class="cable">
-          <h3>Audience with Shah April 5 &mdash; from E. Tehran (5 cables)</h3>
-          <div class="date">2/4/1973</div>
+        <div ng:repeat="cable in cablePool.cables" class="cable">
+          <h3>{{cable.subject}} &mdash; from {{cable.office}}</h3>
+          <div class="date">{{cable.date_sent}}</div>
 
-          <div class="body">
-            SECRET TEHRAN 2077 Declassified/Released US Department of
-            State EO Systematic Review ... CORRECTED COPY ... Summary:
-            The Dutch Parliament ... <a href="#">Read more</a>
-          </div>
+          <div class="body">{{cable.body|excerpt:200}} <a href="#">Read more</a></div>
 
           <div class="tags"><strong>Tags:</strong> PFOR (1), IR (702), PK (406), XF (58)</div>
         </div>
