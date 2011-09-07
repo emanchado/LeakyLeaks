@@ -18,7 +18,21 @@
     <script src="lib/utils.js"></script>
     <script>
     angular.filter('excerpt', function(input, limit) {
-      return excerpt(input, limit);
+      var text = excerpt(input, limit);
+      // If everything in uppercase, change to lowercase
+      if (! text.match(/[a-z]/)) {
+        return text.toLocaleLowerCase();
+      } else {
+        return text;
+      }
+    });
+    angular.filter('bodytext', function(input) {
+      var text = input;
+      // If everything in uppercase, change to lowercase
+      if (! text.match(/[a-z]/)) {
+        text = text.toLocaleLowerCase();
+      }
+      return text.replace(/\n/g, "<br/>");
     });
 
     LeakyLeaksController.$inject = ['$resource'];
@@ -47,7 +61,7 @@
     };
     </script>
   </head>
-  <body ng:controller="LeakyLeaksController" ng:init="fetchCablesByTag('KPIN')">
+  <body ng:controller="LeakyLeaksController" ng:init="fetchCablesByTag('XF')">
     <div class="topbar">
       <div class="fill">
         <div class="container">
@@ -95,7 +109,17 @@
           <h3>{{cable.subject}} &mdash; from {{cable.office}}</h3>
           <div class="date">{{cable.date_sent}}</div>
 
-          <div class="body">{{cable.body|excerpt:200}} <a href="#">Read more</a></div>
+          <div class="body">{{cable.body|excerpt:500}} <a href="#" onclick="document.getElementById('text-{{cable.identifier}}').style.display = ''">Read more</a></div>
+
+          <div id="text-{{cable.identifier}}" class="modal" style="display: none; position: fixed; top: 400px; left: 400px; width: 60%; height: 60%; overflow: auto">
+            <div class="modal-header">
+              <h3>{{cable.identifier}} &mdash; {{cable.subject}}</h3>
+              <a href="#" onclick="document.getElementById('text-{{cable.identifier}}').style.display = 'none'" class="close">×</a>
+            </div>
+            <div class="modal-body">
+              {{cable.body|bodytext|html}}
+            </div>
+          </div>
 
           <div class="tags"><strong>Tags:</strong> PFOR (1), IR (702), PK (406), XF (58)</div>
         </div>
