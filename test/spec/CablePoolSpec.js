@@ -172,6 +172,20 @@ describe("CablePool", function() {
                                           "Declassified"])).toEqualCables([cable]);
     });
 
+
+    it("should treat a string as a space-separated list of words", function() {
+        var cable = {"identifier":"73TEHRAN2077",
+                     "date_sent":"1973-04-02 08:34:00",
+                     "released":"2011-01-18 21:00:00",
+                     "subject":"AUDIENCE WITH SHAH APRIL 5",
+                     "header":"P 020834Z APR 73\nFM AMEMBASSY TEHRAN...",
+                     "body":"S E C R E T TEHRAN 2077 \n \nDeclassified...",
+                     "office":"Embassy Tehran",
+                     "classification":"SECRET"};
+        cablePool.addCables([cable]);
+        expect(cablePool.cablesWithWords("TEHRAN Declassified")).toEqualCables([cable]);
+    });
+
     it("should not match cables with half-words", function() {
         var cable = {"identifier":"73TEHRAN2077",
                      "date_sent":"1973-04-02 08:34:00",
