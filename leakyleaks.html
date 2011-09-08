@@ -38,30 +38,63 @@
     LeakyLeaksController.$inject = ['$resource'];
     function LeakyLeaksController($resource) {
       this.LeakFeedProxy = $resource(
-        'http://api.leakfeed.com/v1/cables/tag/:tag.json',
+        'http://api.leakfeed.com/v1/:type/:id.json',
         { callback: 'JSON_CALLBACK' },
-        { getByTag: {method: 'JSON', isArray: true}}
+        { getByTag:    {method: 'JSON', isArray: true,
+                                        params: {type: 'cables/tag'}},
+          getByOffice: {method: 'JSON', isArray: true,
+                                        params: {type: 'cables/office'}},
+          getTags:     {method: 'JSON', isArray: true,
+                                        params: {type: 'cables', id: 'tags'}},
+          getOffices:  {method: 'JSON', isArray: true,
+                                        params: {type: 'cables',
+                                                 id: 'offices'}}}
       );
       this.LeakFeedProxyTest = $resource(
-        'http://localhost/:tag.json',
+        'http://localhost/:id.json',
         { },
-        { getByTag: {method: 'GET', isArray: true}}
+        { getByTag:    {method: 'GET', isArray: true},
+          getByOffice: {method: 'GET', isArray: true},
+          getTags:     {method: 'GET', isArray: true, params: {id: 'tags'}},
+          getOffices:  {method: 'GET', isArray: true, params: {id: 'offices'}}}
       );
     }
     LeakyLeaksController.prototype = {
       init: function() {
         this.cablePool = new CablePool;
+        this.setupTags();
+        this.setupOffices();
+      },
+      setupTags: function(tag) {
+        this.availableTags = this.LeakFeedProxy.getTags();
+      },
+      setupOffices: function(tag) {
+        this.availableOffices = this.LeakFeedProxy.getOffices();
       },
       fetchCablesByTag: function(tag) {
         var self = this;
-        var rawCableData = this.LeakFeedProxyTest.getByTag({tag: tag}, function() {
+        var rawCableData = this.LeakFeedProxyTest.getByTag({id: tag}, function() {
+            self.cablePool.reset();
             self.cablePool.addCables(rawCableData);
         });
+      },
+      fetchCablesByOffice: function(office) {
+        var self = this;
+        var rawCableData = this.LeakFeedProxyTest.getByOffice({id: office}, function() {
+            self.cablePool.reset();
+            self.cablePool.addCables(rawCableData);
+        });
+      },
+      search: function() {
+        if (this.office) {
+          this.fetchCablesByOffice(this.office);
+        }
+        return false;
       }
     };
     </script>
   </head>
-  <body ng:controller="LeakyLeaksController" ng:init="fetchCablesByTag('XF')">
+  <body ng:controller="LeakyLeaksController" ng:init="fetchCablesByOffice('Embassy_Tehran')">
     <div class="topbar">
       <div class="fill">
         <div class="container">
@@ -72,7 +105,7 @@
 
     <div class="container-fluid">
       <div class="sidebar">
-        <form class="form-stacked">
+        <form class="form-stacked" ng:submit="search()">
           <h2>Filters</h2>
 
           <div class="clearfix">
@@ -82,30 +115,28 @@
 
           <div class="clearfix">
             <label for="tags">Tags:</label>
-            <select multiple id="tags" name="tags" style="height: auto">
-              <option name="VAT">VAT (1)</option>
-              <option name="PREL">PREL (8484)</option>
-              <option name="PHUM">PHUM (2166)</option>
+            <select multiple id="tags" name="tags" size="15" style="height: auto">
+              <option ng:repeat="t in availableTags" value="{{t.name}}">{{t.display_name}} ({{t.cables}})</option>
             </select>
           </div>
 
           <div class="clearfix">
-            <label for="offices">Office(s):</label>
-            <select multiple id="offices" name="offices" style="height: auto">
-              <option name="Embassy_Tehran">E. Tehran (5)</option>
-              <option name="Consulate_Vancouver">C. Vancouver (39)</option>
-              <option name="Embassy_Sofia">E. Sofia (85)</option>
+            <label for="office">Office:</label>
+            <select id="office" name="office" style="height: auto">
+              <option ng:repeat="o in availableOffices" value="{{o.name}}">{{o.display_name}} ({{o.cables}})</option>
             </select>
           </div>
 
-          <input class="btn primary" type="submit" value="Search" />
+          <input id="searchBtn" class="btn primary" type="submit" value="Search" />
         </form>
       </div>
 
       <div class="content">
-        <h2>Cables</h2>
+        <h2>Cables ({{cablePool.cablesWithWords(filterText).length}})</h2>
 
-        <div ng:repeat="cable in cablePool.cables" class="cable">
+        <input type="text" name="filterText" placeholder="Filter by this text..." />
+
+        <div ng:repeat="cable in cablePool.cablesWithWords(filterText)" class="cable">
           <h3>{{cable.subject}} &mdash; from {{cable.office}}</h3>
           <div class="date">{{cable.date_sent}}</div>
 
@@ -120,8 +151,6 @@
               {{cable.body|bodytext|html}}
             </div>
           </div>
-
-          <div class="tags"><strong>Tags:</strong> PFOR (1), IR (702), PK (406), XF (58)</div>
         </div>
       </div>
     </div>
