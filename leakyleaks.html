@@ -18,7 +18,7 @@
     <script src="lib/utils.js"></script>
     <script>
     angular.filter('excerpt', function(input, limit) {
-      var text = excerpt(input, limit);
+      var text = excerpt(input === undefined ? "" : input, limit);
       // If everything in uppercase, change to lowercase
       if (! text.match(/[a-z]/)) {
         return text.toLocaleLowerCase();
@@ -27,7 +27,7 @@
       }
     });
     angular.filter('bodytext', function(input) {
-      var text = input;
+      var text = input === undefined ? "" : input;
       // If everything in uppercase, change to lowercase
       if (! text.match(/[a-z]/)) {
         text = text.toLocaleLowerCase();
@@ -37,26 +37,17 @@
 
     LeakyLeaksController.$inject = ['$resource'];
     function LeakyLeaksController($resource) {
-      this.LeakFeedProxy = $resource(
-        'http://api.leakfeed.com/v1/:type/:id.json',
+      this.LeakFeedCableProxy = $resource(
+        'http://api.leakfeed.com/v1/cables/:type/:id.json',
         { callback: 'JSON_CALLBACK' },
-        { getByTag:    {method: 'JSON', isArray: true,
-                                        params: {type: 'cables/tag'}},
-          getByOffice: {method: 'JSON', isArray: true,
-                                        params: {type: 'cables/office'}},
-          getTags:     {method: 'JSON', isArray: true,
-                                        params: {type: 'cables', id: 'tags'}},
-          getOffices:  {method: 'JSON', isArray: true,
-                                        params: {type: 'cables',
-                                                 id: 'offices'}}}
+        { getByTag:    {method: 'JSON', isArray: true, params: {type: 'tag'}},
+          getByOffice: {method: 'JSON', isArray: true, params: {type: 'office'}}}
       );
-      this.LeakFeedProxyTest = $resource(
-        'http://localhost/:id.json',
-        { },
-        { getByTag:    {method: 'GET', isArray: true},
-          getByOffice: {method: 'GET', isArray: true},
-          getTags:     {method: 'GET', isArray: true, params: {id: 'tags'}},
-          getOffices:  {method: 'GET', isArray: true, params: {id: 'offices'}}}
+      this.LeakFeedResourceProxy = $resource(
+        'http://api.leakfeed.com/v1/cables/:id.json',
+        { callback: 'JSON_CALLBACK' },
+        { getTags:     {method: 'JSON', isArray: true, params: {id: 'tags'}},
+          getOffices:  {method: 'JSON', isArray: true, params: {id: 'offices'}}}
       );
     }
     LeakyLeaksController.prototype = {
@@ -66,26 +57,40 @@
         this.setupOffices();
       },
       setupTags: function(tag) {
-        this.availableTags = this.LeakFeedProxy.getTags();
+        this.availableTags = this.LeakFeedResourceProxy.getTags();
       },
       setupOffices: function(tag) {
-        this.availableOffices = this.LeakFeedProxy.getOffices();
+        this.availableOffices = this.LeakFeedResourceProxy.getOffices();
       },
-      fetchCablesByTag: function(tag) {
+      fetchCablesByTags: function(tags) {
         var self = this;
-        var rawCableData = this.LeakFeedProxyTest.getByTag({id: tag}, function() {
-            self.cablePool.reset();
-            self.cablePool.addCables(rawCableData);
+        var tagResults = [];
+        v.each(tags, function(t) {
+          self.LeakFeedCableProxy.getByTag({id: t}, function(r) {
+            tagResults.push(r);
+            if (tagResults.length === tags.length) {
+              self.cablePool.reset();
+              opera.postError("Adding the intersection of " + JSON.stringify(tagResults));
+              self.cablePool.addCableIntersection(tagResults);
+              opera.postError("Resulted in " + self.cablePool.cables.length + " cables");
+            }
+          });
         });
       },
       fetchCablesByOffice: function(office) {
         var self = this;
-        var rawCableData = this.LeakFeedProxyTest.getByOffice({id: office}, function() {
-            self.cablePool.reset();
-            self.cablePool.addCables(rawCableData);
+        var rawCableData = this.LeakFeedCableProxy.getByOffice({id: office}, function() {
+          self.cablePool.reset();
+          self.cablePool.addCables(rawCableData);
         });
       },
-      search: function() {
+      searchTags: function() {
+        if (this.tags) {
+          this.fetchCablesByTags(this.tags);
+        }
+        return false;
+      },
+      searchOffice: function() {
         if (this.office) {
           this.fetchCablesByOffice(this.office);
         }
@@ -94,7 +99,7 @@
     };
     </script>
   </head>
-  <body ng:controller="LeakyLeaksController" ng:init="fetchCablesByOffice('Embassy_Tehran')">
+  <body ng:controller="LeakyLeaksController">
     <div class="topbar">
       <div class="fill">
         <div class="container">
@@ -105,14 +110,9 @@
 
     <div class="container-fluid">
       <div class="sidebar">
-        <form class="form-stacked" ng:submit="search()">
-          <h2>Filters</h2>
+        <h2>Filters</h2>
 
-          <div class="clearfix">
-            <label for="text">Text:</label>
-            <input id="text" type="text" name="text" style="width: auto" placeholder="Keywords" />
-          </div>
-
+        <form class="form-stacked" ng:submit="searchTags()" style="margin-left: -20px">
           <div class="clearfix">
             <label for="tags">Tags:</label>
             <select multiple id="tags" name="tags" size="15" style="height: auto">
@@ -120,6 +120,10 @@
             </select>
           </div>
 
+          <input id="searchTagsBtn" class="btn primary" type="submit" value="Show" />
+        </form>
+
+        <form class="form-stacked" ng:submit="searchOffice()" style="margin-left: -20px">
           <div class="clearfix">
             <label for="office">Office:</label>
             <select id="office" name="office" style="height: auto">
@@ -127,7 +131,7 @@
             </select>
           </div>
 
-          <input id="searchBtn" class="btn primary" type="submit" value="Search" />
+          <input id="searchOfficeBtn" class="btn primary" type="submit" value="Show" />
         </form>
       </div>
 
