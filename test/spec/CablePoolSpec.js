@@ -198,4 +198,66 @@ describe("CablePool", function() {
         cablePool.addCables([cable]);
         expect(cablePool.cablesWithWords(["TEH"])).toEqualCables([]);
     });
+
+    it("should calculate intersection of zero cable sets", function() {
+        cablePool.addCableIntersection([])
+        expect(cablePool.cables).toEqualCables([]);
+    });
+
+    it("should calculate intersection of one cable set", function() {
+        var cableSet = [{"identifier":"73TEHRAN2077",
+                         "classification":"SECRET"},
+                        {"identifier":"73TEHRAN2078",
+                         "classification":"SECRET"}];
+        cablePool.addCableIntersection([cableSet])
+        expect(cablePool.cables).toEqualCables(cableSet);
+    });
+
+    it("should calculate intersection of two equal cable sets", function() {
+        var cableSet1 = [{"identifier":"73TEHRAN2077",
+                          "classification":"SECRET"},
+                         {"identifier":"73TEHRAN2078",
+                          "classification":"SECRET"}];
+        var cableSet2 = [{"identifier":"73TEHRAN2077",
+                          "classification":"SECRET"},
+                         {"identifier":"73TEHRAN2078",
+                          "classification":"SECRET"}];
+        cablePool.addCableIntersection([cableSet1, cableSet2])
+        expect(cablePool.cables).toEqualCables(cableSet1);
+    });
+
+    it("should calculate intersection of two completely different sets", function() {
+        var cableSet1 = [{"identifier":"73TEHRAN2077",
+                          "classification":"SECRET"},
+                         {"identifier":"73TEHRAN2078",
+                          "classification":"SECRET"}];
+        var cableSet2 = [{"identifier":"73TEHRAN2079",
+                          "classification":"SECRET"},
+                         {"identifier":"73TEHRAN2080",
+                          "classification":"SECRET"}];
+        cablePool.addCableIntersection([cableSet1, cableSet2]);
+        expect(cablePool.cables).toEqualCables([]);
+    });
+
+    it("should calculate intersection of two slightly different sets", function() {
+        var commonCable = {"identifier":"73TEHRAN2078",
+                           "classification":"SECRET"};
+        var cableSet1 = [{"identifier":"73TEHRAN2077",
+                          "classification":"SECRET"},
+                         commonCable];
+        var cableSet2 = [commonCable,
+                         {"identifier":"73TEHRAN2080",
+                          "classification":"SECRET"}];
+        cablePool.addCableIntersection([cableSet1, cableSet2]);
+        expect(cablePool.cables).toEqualCables([commonCable]);
+    });
+
+    it("should calculate intersection of the same sets, different order", function() {
+        var cable1 = {"identifier":"73TEHRAN2077",
+                      "classification":"SECRET"};
+        var cable2 = {"identifier":"73TEHRAN2078",
+                      "classification":"SECRET"};
+        cablePool.addCableIntersection([[cable1, cable2], [cable2, cable1]]);
+        expect(cablePool.cables).toEqualCables([cable1, cable2]);
+    });
 });
