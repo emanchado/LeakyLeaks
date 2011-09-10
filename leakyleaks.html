@@ -70,16 +70,14 @@
             tagResults.push(r);
             if (tagResults.length === tags.length) {
               self.cablePool.reset();
-              opera.postError("Adding the intersection of " + JSON.stringify(tagResults));
               self.cablePool.addCableIntersection(tagResults);
-              opera.postError("Resulted in " + self.cablePool.cables.length + " cables");
             }
           });
         });
       },
       fetchCablesByOffice: function(office) {
         var self = this;
-        var rawCableData = this.LeakFeedCableProxy.getByOffice({id: office}, function() {
+        this.LeakFeedCableProxy.getByOffice({id: office}, function(rawCableData) {
           self.cablePool.reset();
           self.cablePool.addCables(rawCableData);
         });
