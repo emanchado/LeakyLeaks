@@ -34,6 +34,15 @@
       }
       return text.replace(/\n/g, "<br/>");
     });
+    angular.filter('officename', function(office) {
+      if (office.indexOf("Embassy ") !== -1) {
+        return office.replace("Embassy ", "") + " (Embassy)";
+      }
+      if (office.indexOf("Consulate ") !== -1) {
+        return office.replace("Consulate ", "") + " (Consulate)";
+      }
+      return office;
+    });
 
     LeakyLeaksController.$inject = ['$resource'];
     function LeakyLeaksController($resource) {
@@ -57,10 +66,28 @@
         this.setupOffices();
       },
       setupTags: function(tag) {
-        this.availableTags = this.LeakFeedResourceProxy.getTags();
+        var self = this;
+        this.LeakFeedResourceProxy.getTags({}, function(r) {
+          self.availableTags = r.sort(function(a, b) {
+            var aName = a.display_name;
+            var bName = b.display_name;
+            if (aName === bName) return 0;
+            return (aName > bName) ? 1 : -1;
+          });
+        });
       },
       setupOffices: function(tag) {
-        this.availableOffices = this.LeakFeedResourceProxy.getOffices();
+        var self = this;
+        this.LeakFeedResourceProxy.getOffices({}, function(r) {
+          self.availableOffices = r.sort(function(a, b) {
+            var aName = a.display_name.replace("Embassy ", "").
+                                       replace("Consulate ", "");
+            var bName = b.display_name.replace("Embassy ", "").
+                                       replace("Consulate ", "");
+            if (aName === bName) return 0;
+            return (aName > bName) ? 1 : -1;
+          });
+        });
       },
       fetchCablesByTags: function(tags) {
         var self = this;
@@ -125,7 +152,7 @@
           <div class="clearfix">
             <label for="office">Office:</label>
             <select id="office" name="office" style="height: auto">
-              <option ng:repeat="o in availableOffices" value="{{o.name}}">{{o.display_name}} ({{o.cables}})</option>
+              <option ng:repeat="o in availableOffices" value="{{o.name}}">{{o.display_name|officename}} ({{o.cables}})</option>
             </select>
           </div>
 
