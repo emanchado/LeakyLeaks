@@ -273,4 +273,34 @@ describe("CablePool", function() {
         cablePool.addCableIntersection([[cable1, cable2], [cable2, cable1]]);
         expect(cablePool.cables).toEqualCables([cable1, cable2]);
     });
+
+    it("should barf when addCables receives invalid options", function() {
+        expect(function() {
+            cablePool.addCables([], {sort: "date_sent", invalidOption: "foo"});
+        }).toThrow(new Error("Invalid option 'invalidOption'"));
+    });
+
+    it("should order cables given to addCables with the appropriate option", function() {
+        var cable1 = {"identifier":"73TEHRAN2077",
+                      "date_sent":"1972-02-25 09:30:00"};
+        var cable2 = {"identifier":"73TEHRAN2078",
+                      "date_sent":"1979-08-13 04:58:00"};
+        cablePool.addCables([cable1, cable2], {sort: "date_sent"});
+        expect(cablePool.cables).toEqualCables([cable2, cable1]);
+    });
+
+    it("should order cables given to addCableIntersection with the appropriate option", function() {
+        var cable1 = {"identifier":"73TEHRAN2077",
+                      "date_sent":"1972-02-25 09:30:00"};
+        var cable2 = {"identifier":"73TEHRAN2078",
+                      "date_sent":"1979-08-13 04:58:00"};
+        var cable3 = {"identifier":"75TEHRAN2069",
+                      "date_sent":"2010-11-30 16:30:00"};
+        var cable4 = {"identifier":"75TEHRAN2070",
+                      "date_sent":"2010-11-30 16:30:00"};
+        cablePool.addCableIntersection([[cable1, cable3, cable2],
+                                        [cable2, cable1, cable3, cable4]],
+                                       {sort: "date_sent"});
+        expect(cablePool.cables).toEqualCables([cable3, cable2, cable1]);
+    });
 });
