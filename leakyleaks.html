@@ -11,10 +11,10 @@
     <link href="css/bootstrap-1.2.0.css" rel="stylesheet">
     <style>
       body { padding-top: 40px; }
+      .pagination { float: right; }
     </style>
     <script src="lib/angular-0.9.19.min.js" ng:autobind></script>
     <script src="lib/CablePool.js"></script>
-    <script src="lib/CablePaginator.js"></script>
     <script src="lib/valentine.min.js"></script>
     <script src="lib/utils.js"></script>
     <script>
@@ -63,10 +63,11 @@
     LeakyLeaksController.prototype = {
       init: function() {
         this.cablePool = new CablePool;
-        this.cablePaginator = new CablePaginator(this.cablePool, 10);
+        this.cables = [];
+        this.paginationInfo = pageInfo([], 1);
+        this.page = 1;
         this.setupTags();
         this.setupOffices();
-        this.page = 0;
       },
       setupTags: function(tag) {
         var self = this;
@@ -100,7 +101,10 @@
             tagResults.push(r);
             if (tagResults.length === tags.length) {
               self.cablePool.reset();
-              self.cablePool.addCableIntersection(tagResults);
+              self.cablePool.addCableIntersection(tagResults,
+                                                  {sort: 'date_sent'});
+              self.cables = self.cablePool.cablesWithWords(self.filterText);
+              self.paginationInfo = pageInfo(self.cables, self.page);
             }
           });
         });
@@ -109,7 +113,9 @@
         var self = this;
         this.LeakFeedCableProxy.getByOffice({id: office}, function(rawCableData) {
           self.cablePool.reset();
-          self.cablePool.addCables(rawCableData);
+          self.cablePool.addCables(rawCableData, {sort: 'date_sent'});
+          self.cables = self.cablePool.cablesWithWords(self.filterText);
+          self.paginationInfo = pageInfo(self.cables, self.page);
         });
       },
       searchTags: function() {
@@ -123,6 +129,29 @@
           this.fetchCablesByOffice(this.office);
         }
         return false;
+      },
+      updatePage: function() {
+        this.paginationInfo = pageInfo(this.cables, this.page);
+      },
+      updateCables: function() {
+        this.cables = this.cablePool.cablesWithWords(this.filterText);
+        this.updatePage();
+      },
+      goToFirstPage: function() {
+        this.page = 1;
+        this.updatePage();
+      },
+      goToLastPage: function() {
+        this.page = this.paginationInfo.lastPage;
+        this.updatePage();
+      },
+      goToPreviousPage: function() {
+        this.page = this.page - 1;
+        this.updatePage();
+      },
+      goToNextPage: function() {
+        this.page = this.page + 1;
+        this.updatePage();
       }
     };
     </script>
@@ -164,13 +193,11 @@
       </div>
 
       <div class="content">
-        <h2>Cables ({{cablePaginator.cablesWithWordsForPage(filterText, page).length}})</h2>
+        <span class="pagination"><span ng:show="page > 1"><a ng:click="goToFirstPage()">&lt;&lt; first</a> <a ng:click="goToPreviousPage()">&lt; previous</a></span> <span ng:show="page < paginationInfo.totalPages"><a ng:click="goToNextPage()">next &gt;</a> <a ng:click="goToLastPage()">last &gt;&gt;</a></span></span><h2>Cables ({{paginationInfo.firstCable}} - {{paginationInfo.lastCable}} of {{paginationInfo.totalCables}})</h2>
 
-        <input type="text" name="filterText" placeholder="Filter by this text..." />
+        <input type="text" name="filterText" placeholder="Filter by this text..." ng:change="updateCables()" />
 
-        <input type="text" name="page" />
-
-        <div ng:repeat="cable in cablePaginator.cablesWithWordsForPage(filterText, page)" class="cable">
+        <div ng:repeat="cable in paginationInfo.cables" class="cable">
           <h3>{{cable.subject}} &mdash; from {{cable.office}}</h3>
           <div class="date">{{cable.date_sent}}</div>
 
