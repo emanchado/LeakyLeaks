@@ -66,6 +66,7 @@
         this.cables = [];
         this.paginationInfo = pageInfo([], 1);
         this.page = 1;
+        this.previousPageLinkClass = this.nextPageLinkClass = 'disabled';
         this.setupTags();
         this.setupOffices();
       },
@@ -105,6 +106,7 @@
                                                   {sort: 'date_sent'});
               self.cables = self.cablePool.cablesWithWords(self.filterText);
               self.paginationInfo = pageInfo(self.cables, self.page);
+              self.updatePage();
             }
           });
         });
@@ -116,6 +118,7 @@
           self.cablePool.addCables(rawCableData, {sort: 'date_sent'});
           self.cables = self.cablePool.cablesWithWords(self.filterText);
           self.paginationInfo = pageInfo(self.cables, self.page);
+          self.updatePage();
         });
       },
       searchTags: function() {
@@ -132,9 +135,14 @@
       },
       updatePage: function() {
         this.paginationInfo = pageInfo(this.cables, this.page);
+        this.previousPageLinkClass =
+          (this.page > 1) ? '' : 'disabled';
+        this.nextPageLinkClass =
+          (this.page < this.paginationInfo.totalPages) ? '' : 'disabled';
       },
       updateCables: function() {
         this.cables = this.cablePool.cablesWithWords(this.filterText);
+        this.page = 1;
         this.updatePage();
       },
       goToFirstPage: function() {
@@ -142,7 +150,7 @@
         this.updatePage();
       },
       goToLastPage: function() {
-        this.page = this.paginationInfo.lastPage;
+        this.page = this.paginationInfo.totalPages;
         this.updatePage();
       },
       goToPreviousPage: function() {
@@ -193,7 +201,7 @@
       </div>
 
       <div class="content">
-        <span class="pagination"><span ng:show="page > 1"><a ng:click="goToFirstPage()">&lt;&lt; first</a> <a ng:click="goToPreviousPage()">&lt; previous</a></span> <span ng:show="page < paginationInfo.totalPages"><a ng:click="goToNextPage()">next &gt;</a> <a ng:click="goToLastPage()">last &gt;&gt;</a></span></span><h2>Cables ({{paginationInfo.firstCable}} - {{paginationInfo.lastCable}} of {{paginationInfo.totalCables}})</h2>
+        <div class="pagination"><ul><li ng:class="previousPageLinkClass"><a ng:click="goToFirstPage()">&lt;&lt; first</a><li><li ng:class="previousPageLinkClass"><a ng:click="goToPreviousPage()">&lt; previous</a></li><li><a>page {{page}}</a></li><li ng:class="nextPageLinkClass"><a ng:click="goToNextPage()">next &gt;</a></li><li ng:class="nextPageLinkClass"><a ng:click="goToLastPage()">last &gt;&gt;</a></li></ul></div><h2>Cables ({{paginationInfo.firstCable}} - {{paginationInfo.lastCable}} of {{paginationInfo.totalCables}})</h2>
 
         <input type="text" name="filterText" placeholder="Filter by this text..." ng:change="updateCables()" />
 
