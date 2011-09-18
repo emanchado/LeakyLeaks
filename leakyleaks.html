@@ -59,6 +59,20 @@
         { getTags:     {method: 'JSON', isArray: true, params: {id: 'tags'}},
           getOffices:  {method: 'JSON', isArray: true, params: {id: 'offices'}}}
       );
+      this.LeakFeedCableProxyTest = $resource(
+        'http://localhost/:id.json',
+        { callback: 'JSON_CALLBACK' },
+        { getByTag:    {method: 'GET', isArray: true, params: {type: 'tag'}},
+          getByOffice: {method: 'GET', isArray: true, params: {type: 'office'}}}
+      );
+      this.LeakFeedResourceProxyTest = $resource(
+        'http://localhost/:id.json',
+        { callback: 'JSON_CALLBACK' },
+        { getTags:     {method: 'GET', isArray: true, params: {id: 'tags'}},
+          getOffices:  {method: 'GET', isArray: true, params: {id: 'offices'}}}
+      );
+      // this.LeakFeedCableProxy    = this.LeakFeedCableProxyTest;
+      // this.LeakFeedResourceProxy = this.LeakFeedResourceProxyTest;
     }
     LeakyLeaksController.prototype = {
       init: function() {
