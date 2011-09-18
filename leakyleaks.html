@@ -72,6 +72,7 @@
       },
       setupTags: function(tag) {
         var self = this;
+        self.tags = [];
         this.LeakFeedResourceProxy.getTags({}, function(r) {
           self.availableTags = r.sort(function(a, b) {
             var aName = a.display_name;
@@ -83,6 +84,7 @@
       },
       setupOffices: function(tag) {
         var self = this;
+        self.office = '';
         this.LeakFeedResourceProxy.getOffices({}, function(r) {
           self.availableOffices = r.sort(function(a, b) {
             var aName = a.display_name.replace("Embassy ", "").
@@ -192,6 +194,7 @@
           <div class="clearfix">
             <label for="office">Office:</label>
             <select id="office" name="office" style="height: auto">
+              <option value="">Choose office</option>
               <option ng:repeat="o in availableOffices" value="{{o.name}}">{{o.display_name|officename}} ({{o.cables}})</option>
             </select>
           </div>
